@@ -25,20 +25,41 @@ replace="import {} from \"@mapitin/mapitin-library.interfaces\""
 # helpful tip: the seperator used in the `sed` command argument separator; in this case is the vertical bar (|) symbol, can actually be any character, as long as it doesn't conflict with: hash (#) char works too
 ########################################################################
 
-
-
 ####################################
 # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
 ####################################
 
-# grep -E -R -H $find ./
+dir_regex_s="`grep -E -R $find ./`" # save `grep` command output to a variable
 
 
-grep -E $find test.js | python3 extract_substr.py | { read message && sed -i -E "s|${find}|"$message"|" test.js; }
+################################ TO WORK WITH extract_substr.py -- not working as expected #####################
+# grep -E $find test.js | python3 extract_substr.py | { read message && sed -i -E "s|${find}|"$message"|" test.js; }
+# grep -E $find test.js | python3 extract_substr.py 
+#################################################################################################################
+
+
+
+dir_regex_s="`tr -d '[:space:]' <<< "$dir_regex"`"  
+
+# Set the IFS (Internal Field Separator) to be a semicolon instead: https://www.baeldung.com/linux/ifs-shell-variable
+IFS=';'
+
+for dir_regex in $dir_regex_s
+ do 
+  # sed -nE "s|.*:|1|p"
+  echo $dir_regex
+    # [[ $text =~ \{.*} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
+done
+
+
+###############################################################
+# $BASH_REMATCH is the regex matched variable; in an array format
+###############################################################
+
+
+# sed -i -E "s|${find}|hello|" test.js
 
 # sed -i -E "s|${find}|"import $1 from \"@mapitin/mapitin-library.interfaces\""|" test.js
-
-
 
 
 
