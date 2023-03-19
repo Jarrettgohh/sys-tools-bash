@@ -1,7 +1,7 @@
 #!/bin/bash
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/sys
+path_to_bit_file=Desktop/mapitin-repository/sys # to replace in PROD
 
 # combine the two path string variables to one variable
 final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}/test.js"
@@ -13,7 +13,7 @@ cloud_bit_dir=\"@mapitin/mapitin-library.interfaces\"
 
 # create the find and replace string 
 find="import.*\{.+\}.*from.*\"../../../mapitin-interfaces/index\""
-replace="import {} from \"@mapitin/mapitin-library.interfaces\""
+replace="import _ from \"@mapitin/mapitin-library.interfaces\""
 
 
 
@@ -49,19 +49,25 @@ for dir_import in $dir_imports
   shopt -s lastpipe
 
   # removes the semicolon (:) and extracts the dir
-  echo $dir_import | grep -E -o ".*:" | { read message && dir="$(sed -E 's|':'||' <<< $message)"; } 
+  echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
   
-  # removes the semicolon (:) and extracts the import statement
-  echo $dir_import | grep -E -o ":.*" | { read message && import="$(sed -E 's|':'||' <<< $message)"; }
-  echo $dir_import
+  # # removes the semicolon (:) and extracts the import statement
+  # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
 
+  grep -E -o "\{.*\}" <<< $dir_import | { read data && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
+
+  echo $import_replace
+  echo $dir
+
+  # text="import { } from \"@mapitin/mapitin-library.interfaces\""
+  # sed -E 's|"\{.*\}"|hello|' <<< $text
+ 
+  # sed -i -E 's|"$import"||' $dir
 
   # sed -E "s|":"||"  <<< "helo:"
-
-
   # grep -E -o "hello" <<< "hello world" 
 
-  # [[ $text =~ \{.*} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
+  # [[ $text =~ \{.*\} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
 done
 
 
