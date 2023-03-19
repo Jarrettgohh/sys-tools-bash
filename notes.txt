@@ -1,0 +1,7 @@
+----------
+
+Bash regex
+----------
+Bash regx syntax :https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_04_01.html
+Using regex in bash: https://linuxconfig.org/advanced-bash-regex-with-examples
+
