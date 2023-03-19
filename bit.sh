@@ -1,10 +1,10 @@
 #!/bin/bash
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/sys # to replace in PROD
+path_to_bit_file=Desktop/mapitin-repository/sys/ # to replace in PROD
 
 # combine the two path string variables to one variable
-final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}/test.js"
+final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}"
 
 
 local_bit_dir=\"../../../mapitin-interfaces/index\"
@@ -29,8 +29,7 @@ replace="import _ from \"@mapitin/mapitin-library.interfaces\""
 # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
 ####################################
 
-dir_imports="$(grep -E -r $find ./)" # save `grep` command output to a variable
-
+dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
 
 ################################ TO WORK WITH extract_substr.py -- not working as expected #####################
 # grep -E $find test.js | python3 extract_substr.py | { read message && sed -i -E "s|${find}|"$message"|" test.js; }
@@ -43,13 +42,14 @@ dir_imports="$(grep -E -r $find ./)" # save `grep` command output to a variable
 #####################################
 dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
 
-# Set the IFS (Internal Field Separator) to be only a space (denoted by I) instead: https://www.baeldung.com/linux/ifs-shell-variable
-# not actually needed - but just for learning purposes
+# Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
 IFS=';'
 
 for dir_import in $dir_imports
  do 
-
+ 
+ # setting the lastpipe option would make the last part of the pipeline run in the current environment
+ # `shopt` is used to update the settings of the shell terminal
   shopt -s lastpipe
 
   # removes the semicolon (:) and extracts the dir
@@ -57,11 +57,12 @@ for dir_import in $dir_imports
   
   # # removes the semicolon (:) and extracts the import statement
   # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
-
   grep -E -o "\{.*\}" <<< $dir_import | { read data && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
 
-  echo $import_replace
-  echo $dir
+
+  # command to update the file according to the directory given in $dir
+  sed -i -E "s|"$find"|"$import_replace"|" $dir
+
 
   # text="import { } from \"@mapitin/mapitin-library.interfaces\""
   # sed -E 's|"\{.*\}"|hello|' <<< $text
