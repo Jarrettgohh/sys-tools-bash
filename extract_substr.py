@@ -1,9 +1,9 @@
 import sys
 import re
 
-str = sys.argv[1]
+str = sys.stdin.read()
 
-print(str)
-pattern = ".+\{.*\w+.*}.+"
-match = re.search(pattern, "test { hello } ")
-print(match)
+pattern = "\{.*\w+.*}"
+match = re.findall(pattern, "import { hello } from \"..\"")[0]
+
+exit(match)

@@ -27,9 +27,25 @@ replace="import {} from \"@mapitin/mapitin-library.interfaces\""
 
 
 
-# grep -E -R -H $find ./
-grep -E $find test.js | echo $1
+####################################
+# Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
+####################################
 
+# grep -E -R -H $find ./
+
+
+grep -E $find test.js | python3 extract_substr.py | { read message && sed -i -E "s|${find}|"$message"|" test.js; }
+
+# sed -i -E "s|${find}|"import $1 from \"@mapitin/mapitin-library.interfaces\""|" test.js
+
+
+
+
+
+
+####################################
+# Command to replace a regex pattern with a string
+####################################
 
 # sed -i -E "s|${find}|${replace}|g" $final_dir 
 
