@@ -29,7 +29,7 @@ replace="import _ from \"@mapitin/mapitin-library.interfaces\""
 # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
 ####################################
 
-dir_imports="$(grep -E -R $find ./)" # save `grep` command output to a variable
+dir_imports="$(grep -E -r $find ./)" # save `grep` command output to a variable
 
 
 ################################ TO WORK WITH extract_substr.py -- not working as expected #####################
@@ -38,14 +38,18 @@ dir_imports="$(grep -E -R $find ./)" # save `grep` command output to a variable
 #################################################################################################################
 
 
+#####################################
+# use the transform (tr) command along with the delete flag (-d)
+#####################################
 dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
 
-# Set the IFS (Internal Field Separator) to be a semicolon instead: https://www.baeldung.com/linux/ifs-shell-variable
+# Set the IFS (Internal Field Separator) to be only a space (denoted by I) instead: https://www.baeldung.com/linux/ifs-shell-variable
+# not actually needed - but just for learning purposes
 IFS=';'
 
 for dir_import in $dir_imports
  do 
- 
+
   shopt -s lastpipe
 
   # removes the semicolon (:) and extracts the dir
