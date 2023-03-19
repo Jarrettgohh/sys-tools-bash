@@ -1,1 +1,1 @@
-import {GetUserPrivateConversationsResponse} from "@mapitin/mapitin-library.interfaces";
+import { GetUserPrivateConversationsResponse } from "@mapitin/mapitin-library.interfaces";

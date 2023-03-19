@@ -57,7 +57,7 @@ for dir_import in $dir_imports
   
   # # removes the semicolon (:) and extracts the import statement
   # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
-  grep -E -o "\{.*\}" <<< $dir_import | { read data && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
+  grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
 
 
   # command to update the file according to the directory given in $dir
