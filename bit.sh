@@ -29,7 +29,7 @@ replace="import {} from \"@mapitin/mapitin-library.interfaces\""
 # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
 ####################################
 
-dir_regex_s="`grep -E -R $find ./`" # save `grep` command output to a variable
+dir_regexes="`grep -E -R $find ./`" # save `grep` command output to a variable
 
 
 ################################ TO WORK WITH extract_substr.py -- not working as expected #####################
@@ -39,16 +39,22 @@ dir_regex_s="`grep -E -R $find ./`" # save `grep` command output to a variable
 
 
 
-dir_regex_s="`tr -d '[:space:]' <<< "$dir_regex"`"  
+dir_regexes="`tr -d '[:space:]' <<< "$dir_regexes"`"  
 
 # Set the IFS (Internal Field Separator) to be a semicolon instead: https://www.baeldung.com/linux/ifs-shell-variable
 IFS=';'
 
-for dir_regex in $dir_regex_s
+for dir_regex in $dir_regexes
  do 
-  # sed -nE "s|.*:|1|p"
-  echo $dir_regex
-    # [[ $text =~ \{.*} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
+  echo $dir_regex | grep -E -o ".*:" | { read message && dir="`sed -E 's|':'||' <<< $message`"; echo $dir; } 
+
+
+  # sed -E "s|":"||"  <<< "helo:"
+
+
+  # grep -E -o "hello" <<< "hello world" 
+
+  # [[ $text =~ \{.*} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
 done
 
 
