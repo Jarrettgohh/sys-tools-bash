@@ -13,19 +13,28 @@
 #######################################################
 
 
-dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"../../../mapitin-interfaces/index\""
+dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"(../)+?mapitin-interfaces/index\""
 dev_replace_str="\"../../../mapitin-interfaces/index\""
 
-prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"../../../@mapitin/mapitin-library.interfaces\""
+prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"@mapitin/mapitin-library.interfaces\""
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 
+path_to_WSL_filesystem=/mnt/c/Users/gohja/Desktop
+path_to_bit_file=mapitin-repository/mapitin-api-server/src # to replace in PROD
+
+# folders=("/services" "/database" "/helpers" "/models")
+# folders=("/components" "/screens" "/navigation")
+folders=("/bit-cloud")
 
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
 # p (prod): production - to change the bit imports to be production
 # f (files) - only display the files with string match
+# h (help) - display help message
+# s - to specify the directory to run this script on 
+# r - to specify the file directory for the import statement
 
-while getopts 'dpf' OPTION; do
+while getopts 'dpfhs:r:' OPTION; do
   case "$OPTION" in
     d) 
       full_find=$prod_find_regex # to match the whole import statement ( import { var1 } from "...")
@@ -40,6 +49,22 @@ while getopts 'dpf' OPTION; do
     f)
       display_files_only=true
      ;;
+    h)
+     printf "\n [-d] development mode"
+     printf "\n [-p] production mode"
+     printf "\n [-f] print files only"
+     printf "\n [-s] to specify the directory to run this script on; base path would be: "$path_to_WSL_filesystem""
+     printf "\n [-r] to specify the file directory for the import statement to replace with in development mode (-d) flag; default to: "$dev_replace_str""
+     printf "\n [-h] prints help message"
+     printf "\n\n"
+     ;;
+    s)
+    # the argument passed in to the -s flag will be stored by default in $OPTARG
+     path_to_bit_file="$OPTARG"
+     ;;
+    r)
+     replace="$OPTARG"
+     ;;
     ?)
       echo "script usage: "$0" [-d] [-p] [-f]" >&2 # >&2 means output stdout to stderr
       exit 1
@@ -50,14 +75,10 @@ done
 # -z operator checks if the variable is unset
 if [ -z "$full_find" ] || [ -z "$partial_find" ] || [ -z "$replace" ];
  then 
-  exit;
+  echo Please provide either -d or -p flag
+  exit 1;
 fi
 
-
-path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/mapitin-api-server/src # to replace in PROD
-
-folders=("/services" "/database" "/helpers" "/models")
 
 for folder in ${folders[@]}; do
   final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}${folder}"
