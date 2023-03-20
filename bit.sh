@@ -1,10 +1,10 @@
 #!/bin/bash
 
 
-dev_find_regex="import.*\{(.|\n)+\}.*from.*\"../../../mapitin-interfaces/index\""
+dev_find_regex="import[[:space:]]{1,10}\{(.|\n)+\}[[:space:]]{1,10}from[[:space:]]{1,10}\"../../../mapitin-interfaces/index\""
 dev_replace_str="\"../../../mapitin-interfaces/index\""
 
-prod_find_regex="import.*\{(.|\n)+\}.*from.*\"@mapitin/mapitin-library.interfaces\""
+prod_find_regex="import[[:space:]]{1,10}\{(.|\n)+\}[[:space:]]{1,10}from[[:space:]]{1,10}\"@mapitin/mapitin-library.interfaces\""
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 
 
@@ -43,10 +43,9 @@ fi
 
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/sys # to replace in PROD
+path_to_bit_file=Desktop/mapitin-repository/mapitin-api-server/src # to replace in PROD
 
-#"/services" "/database" "/helpers" "/models"
-folders=("/overdrive1")
+folders=("/services" "/database" "/helpers" "/models")
 
 for folder in ${folders[@]}; do
   final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}${folder}"
