@@ -1,5 +1,34 @@
 #!/bin/bash
 
+
+dev_find_regex="import.*\{.+\}.*from.*\"../../../mapitin-interfaces/index\""
+dev_replace_str="import _ from \"../../../mapitin-interfaces/index\""
+
+prod_find_regex="import.*\{.+\}.*from.*\"@mapitin/mapitin-library.interfaces\""
+prod_replace_str="import _ from \"@mapitin/mapitin-library.interfaces\""
+
+################## PROCESSING OF THE FLAGS ARGS ###############################
+# d (dev): development - to change the bit imports to be local
+# p (prod): production - to change the bit imports to be production
+
+while getopts 'dp' OPTION; do
+  case "$OPTION" in
+    d) 
+      find=$prod_find_regex
+      replace=$dev_replace_str
+      ;;
+    p)
+      find=$dev_find_regex
+      replace=$prod_replace_str
+      ;;
+    ?)
+      echo "script usage: "$0" [-d] [-p]" >&2
+      exit 1
+      ;;
+  esac
+done
+
+
 path_to_WSL_filesystem=/mnt/c/Users/gohja
 path_to_bit_file=Desktop/mapitin-repository/sys/ # to replace in PROD
 
@@ -11,10 +40,52 @@ local_bit_dir=\"../../../mapitin-interfaces/index\"
 cloud_bit_dir=\"@mapitin/mapitin-library.interfaces\"
 
 
-# create the find and replace string 
-find="import.*\{.+\}.*from.*\"../../../mapitin-interfaces/index\""
-replace="import _ from \"@mapitin/mapitin-library.interfaces\""
 
+####################################
+# Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
+####################################
+
+dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
+
+
+#####################################
+# use the transform (tr) command along with the delete flag (-d)
+#####################################
+dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
+
+# Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
+# this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
+IFS=';'
+
+for dir_import in $dir_imports
+ do 
+ 
+
+ # setting the lastpipe option would make the last part of the pipeline run in the current environment
+ # `shopt` is used to update the settings of the shell terminal
+  shopt -s lastpipe
+
+  # removes the semicolon (:) and extracts the dir
+  echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
+
+
+ ################# LOGGING ####################
+  echo Processing file at directory:  "$dir"
+ ##############################################
+
+  
+  # # removes the semicolon (:) and extracts the import statement
+  # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
+  grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
+
+
+  # command to update the file according to the directory given in $dir
+  sed -i -E "s|"$find"|"$import_replace"|" $dir
+
+done
+
+
+########################## END OF FILE -- FURTHER BELOW ARE NOTES #################################################   
 
 
 ########################################################################
@@ -25,11 +96,6 @@ replace="import _ from \"@mapitin/mapitin-library.interfaces\""
 # helpful tip: the seperator used in the `sed` command argument separator; in this case is the vertical bar (|) symbol, can actually be any character, as long as it doesn't conflict with: hash (#) char works too
 ########################################################################
 
-####################################
-# Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
-####################################
-
-dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
 
 ################################ TO WORK WITH extract_substr.py -- not working as expected #####################
 # grep -E $find test.js | python3 extract_substr.py | { read message && sed -i -E "s|${find}|"$message"|" test.js; }
@@ -37,49 +103,11 @@ dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a v
 #################################################################################################################
 
 
-#####################################
-# use the transform (tr) command along with the delete flag (-d)
-#####################################
-dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
-
-# Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
-IFS=';'
-
-for dir_import in $dir_imports
- do 
- 
- # setting the lastpipe option would make the last part of the pipeline run in the current environment
- # `shopt` is used to update the settings of the shell terminal
-  shopt -s lastpipe
-
-  # removes the semicolon (:) and extracts the dir
-  echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
-  
-  # # removes the semicolon (:) and extracts the import statement
-  # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
-  grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
-
-
-  # command to update the file according to the directory given in $dir
-  sed -i -E "s|"$find"|"$import_replace"|" $dir
-
-
-  # text="import { } from \"@mapitin/mapitin-library.interfaces\""
-  # sed -E 's|"\{.*\}"|hello|' <<< $text
- 
-  # sed -i -E 's|"$import"||' $dir
-
-  # sed -E "s|":"||"  <<< "helo:"
-  # grep -E -o "hello" <<< "hello world" 
-
-  # [[ $text =~ \{.*\} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
-done
-
 
 ###############################################################
 # $BASH_REMATCH is the regex matched variable; in an array format
 ###############################################################
-
+# [[ $text =~ \{.*\} ]] && sed -i -E "s|${find}|${BASH_REMATCH[0]}|" ${}
 
 # sed -i -E "s|${find}|hello|" test.js
 
