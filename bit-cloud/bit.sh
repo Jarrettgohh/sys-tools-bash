@@ -1,10 +1,22 @@
 #!/bin/bash
 
+#######################################################
+# [[:space:]] matches an empty space; [a-zA-Z] matches all the alphabets, both upper and lowercase
+# within the \{ \} ({}) match, with escape char (\); there are 4 test cases
+# 1. [a-zA-Z]
+# 2. [[:space:]]
+# 3. ,
+# 4. \n
+# even though the dot char (.) can match all of these (except \n), essentially allowing (.|\n) to be used instead. But its not used as it causes greedy searching which can give segmentation faults (unlimited loops that causes the engine that searches using the regex to flow out of memory); so its better to limit the test cases to prevent over-matching
 
-dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,|\n)+?\}[[:space:]]+?from[[:space:]]+?\"../../../mapitin-interfaces/index\""
+# after the plus (+) symbol, which are used to match a pattern one or more times, a question mark symbol (?) is used to prevent greedy matching
+#######################################################
+
+
+dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"../../../mapitin-interfaces/index\""
 dev_replace_str="\"../../../mapitin-interfaces/index\""
 
-prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,|\n)+?\}[[:space:]]+?from[[:space:]]+?\"../../../@mapitin/mapitin-library.interfaces\""
+prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"../../../@mapitin/mapitin-library.interfaces\""
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 
 
@@ -52,9 +64,11 @@ for folder in ${folders[@]}; do
 
   ####################################
   # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
+
+  # pcregrep with -M flag allows multiline searching
+  # -r flag is recursive search and -l flag is print only file names
   ####################################
   dirs="$(pcregrep -M -rl $full_find $final_dir)" # save `grep` command output to a variable
-
 
   #####################################
   # use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.

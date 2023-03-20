@@ -1,0 +1,42 @@
+import AWS from "aws-sdk";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
+
+import 
+{
+  QueryItemsDBMethodResponse,
+  TableName as TableNameType,
+  GroupChatMessageDatabaseField,
+  PrivateChatMessageDatabaseField,
+  PrivateConversationRecordDatabaseField,
+  PrivateChatConnectionDatabaseField,
+} from "../../../mapitin-interfaces/index";
+import { awsHelper } from "@mapitin/mapitin-library.helpers";
+import * as dynamoDB from "./dynamoDB";
+
+const TableName: TableNameType = "Chats";
+
+interface QueryGroupChatMessagesData {
+  groupId: string;
+  ExclusiveStartKey?: DocumentClient.Key;
+  Limit?: number;
+}
+
+interface QueryPrivateChatMessagesData {
+  privateChatId: string;
+  ExclusiveStartKey?: DocumentClient.Key;
+  Limit?: number;
+}
+
+interface QueryPrivateConversationRecordData {
+  privateChatId: string;
+}
+
+interface QueryPrivateChatConnections {
+  privateChatId: string;
+}
+
+interface UpdatePrivateChatMessage {
+  privateChatId: string;
+  messageId: string;
+  fieldsToUpdate: Partial<PrivateChatMessageDatabaseField>;
+}
