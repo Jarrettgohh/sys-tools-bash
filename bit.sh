@@ -10,8 +10,9 @@ prod_replace_str="import _ from \"@mapitin/mapitin-library.interfaces\""
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
 # p (prod): production - to change the bit imports to be production
+# f (files) - display the files with string match
 
-while getopts 'dp' OPTION; do
+while getopts 'dpf' OPTION; do
   case "$OPTION" in
     d) 
       find=$prod_find_regex
@@ -21,8 +22,12 @@ while getopts 'dp' OPTION; do
       find=$dev_find_regex
       replace=$prod_replace_str
       ;;
+    
+    f)
+      display_files_only=true
+     ;;
     ?)
-      echo "script usage: "$0" [-d] [-p]" >&2
+      echo "script usage: "$0" [-d] [-p] [-f]" >&2 # >&2 means output stdout to stderr
       exit 1
       ;;
   esac
@@ -44,14 +49,21 @@ cloud_bit_dir=\"@mapitin/mapitin-library.interfaces\"
 ####################################
 # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
 ####################################
-
 dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
 
-
 #####################################
-# use the transform (tr) command along with the delete flag (-d)
+# use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
 #####################################
 dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
+
+
+
+
+if [ "$display_files_only" = true ] ; then
+ printf '\n\n############################\n\n'
+ printf 'Printing file directories'
+ printf '\n\n############################\n\n'
+fi
 
 # Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
 # this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
@@ -68,10 +80,16 @@ for dir_import in $dir_imports
   # removes the semicolon (:) and extracts the dir
   echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
 
+  if [ "$display_files_only" = true ] ; then
+     printf "$dir\n"
+     continue
+  fi
+
 
  ################# LOGGING ####################
-  echo Processing file at directory:  "$dir"
+  printf "Processing file at directory:  "$dir"\n"
  ##############################################
+
 
   
   # # removes the semicolon (:) and extracts the import statement
