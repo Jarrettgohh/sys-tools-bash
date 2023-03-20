@@ -35,72 +35,79 @@ done
 
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/sys/ # to replace in PROD
+path_to_bit_file=Desktop/mapitin-repository/mapitin-api-server/src # to replace in PROD
 
-# combine the two path string variables to one variable
-final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}"
+folders=("/services" "/database" "/helpers" "/models")
 
-
-local_bit_dir=\"../../../mapitin-interfaces/index\"
-cloud_bit_dir=\"@mapitin/mapitin-library.interfaces\"
+for folder in ${folders[@]}; do
+  final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}${folder}"
 
 
+  ####################################
+  # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
+  ####################################
+  dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
 
-####################################
-# Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
-####################################
-dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
-
-#####################################
-# use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
-#####################################
-dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
-
+  #####################################
+  # use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
+  #####################################
+  dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
 
 
+  if [ "$display_files_only" = true ] ; 
 
-if [ "$display_files_only" = true ] ; then
- printf '\n\n############################\n\n'
- printf 'Printing file directories'
- printf '\n\n############################\n\n'
-fi
+  then
+   printf '\n\n--------------------------------------\n\n'
+   printf 'Printing files under folder dir: '$folder''
+   printf '\n\n--------------------------------------\n\n'
 
-# Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
-# this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
-IFS=';'
+  else
+   printf '\n\n--------------------------------------\n\n'
+   printf 'Processing files under folder dir: '$folder''
+   printf '\n\n--------------------------------------\n\n'
 
-for dir_import in $dir_imports
- do 
- 
 
- # setting the lastpipe option would make the last part of the pipeline run in the current environment
- # `shopt` is used to update the settings of the shell terminal
-  shopt -s lastpipe
-
-  # removes the semicolon (:) and extracts the dir
-  echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
-
-  if [ "$display_files_only" = true ] ; then
-     printf "$dir\n"
-     continue
   fi
 
+  # Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
+  # this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
+  IFS=';'
 
- ################# LOGGING ####################
-  printf "Processing file at directory:  "$dir"\n"
- ##############################################
+  for dir_import in $dir_imports
+   do 
+
+   # setting the lastpipe option would make the last part of the pipeline run in the current environment
+   # `shopt` is used to update the settings of the shell terminal
+    shopt -s lastpipe
+
+    # removes the semicolon (:) and extracts the dir
+    echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
+
+    if [ "$display_files_only" = true ] ; then
+       printf "$dir\n"
+       continue
+    fi
 
 
-  
-  # # removes the semicolon (:) and extracts the import statement
-  # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
-  grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
+   ################# LOGGING ####################
+    printf "Processing file at directory:  "$dir"\n"
+   ##############################################
 
 
-  # command to update the file according to the directory given in $dir
-  sed -i -E "s|"$find"|"$import_replace"|" $dir
+    
+    # # removes the semicolon (:) and extracts the import statement
+    # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
+    grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
 
+
+    # command to update the file according to the directory given in $dir
+    sed -i -E "s|"$find"|"$import_replace"|" $dir
+
+  done
+ 
 done
+
+
 
 
 ########################## END OF FILE -- FURTHER BELOW ARE NOTES #################################################   
