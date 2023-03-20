@@ -54,7 +54,7 @@ for folder in ${folders[@]}; do
   ####################################
   # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
   ####################################
-  dirs="$(pcregrep -rl $full_find $final_dir)" # save `grep` command output to a variable
+  dirs="$(pcregrep -M -rl $full_find $final_dir)" # save `grep` command output to a variable
 
 
   #####################################
