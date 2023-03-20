@@ -1,10 +1,10 @@
 #!/bin/bash
 
 
-dev_find_regex="import[[:space:]]{1,10}\{(.|\n)+\}[[:space:]]{1,10}from[[:space:]]{1,10}\"../../../mapitin-interfaces/index\""
+dev_find_regex="import(.|\n)+\{(.|\n)+\}(.|\n)+from(.|\n)+\"../../../mapitin-interfaces/index\""
 dev_replace_str="\"../../../mapitin-interfaces/index\""
 
-prod_find_regex="import[[:space:]]{1,10}\{(.|\n)+\}[[:space:]]{1,10}from[[:space:]]{1,10}\"@mapitin/mapitin-library.interfaces\""
+prod_find_regex="import(.|\n)+\{(.|\n)+\}(.|\n)+from(.|\n)+\"@mapitin/mapitin-library.interfaces\""
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 
 
