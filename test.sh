@@ -1,2 +1,7 @@
-echo 'hello' | read message
-echo "$message"
+
+# pcregrep -M "import.*\{(.|\n)+\}.*from.*\"../../../mapitin-interfaces/index\"" ./overdrive1/test.js
+
+find="import.*\{(.|\n)+\}.*from.*\"../../../mapitin-interfaces/index\""
+pcregrep -rl $find /mnt/c/Users/gohja/Desktop/mapitin-repository/sys/overdrive1 
+
+

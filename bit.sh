@@ -1,28 +1,30 @@
 #!/bin/bash
 
 
-dev_find_regex="import.*\{.+\}.*from.*\"../../../mapitin-interfaces/index\""
-dev_replace_str="import _ from \"../../../mapitin-interfaces/index\""
+dev_find_regex="import.*\{(.|\n)+\}.*from.*\"../../../mapitin-interfaces/index\""
+dev_replace_str="\"../../../mapitin-interfaces/index\""
 
-prod_find_regex="import.*\{.+\}.*from.*\"@mapitin/mapitin-library.interfaces\""
-prod_replace_str="import _ from \"@mapitin/mapitin-library.interfaces\""
+prod_find_regex="import.*\{(.|\n)+\}.*from.*\"@mapitin/mapitin-library.interfaces\""
+prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
+
 
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
 # p (prod): production - to change the bit imports to be production
-# f (files) - display the files with string match
+# f (files) - only display the files with string match
 
 while getopts 'dpf' OPTION; do
   case "$OPTION" in
     d) 
-      find=$prod_find_regex
+      full_find=$prod_find_regex # to match the whole import statement ( import { var1 } from "...")
+      partial_find=$prod_replace_str  # to only variable name import section ({ var1 })
       replace=$dev_replace_str
       ;;
     p)
-      find=$dev_find_regex
+      full_find=$dev_find_regex
+      partial_find=$dev_replace_str
       replace=$prod_replace_str
       ;;
-    
     f)
       display_files_only=true
      ;;
@@ -33,25 +35,32 @@ while getopts 'dpf' OPTION; do
   esac
 done
 
+# -z operator checks if the variable is unset
+if [ -z "$full_find" ] || [ -z "$partial_find" ] || [ -z "$replace" ];
+ then 
+  exit;
+fi
+
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja
-path_to_bit_file=Desktop/mapitin-repository/mapitin-api-server/src # to replace in PROD
+path_to_bit_file=Desktop/mapitin-repository/sys # to replace in PROD
 
-folders=("/services" "/database" "/helpers" "/models")
+#"/services" "/database" "/helpers" "/models"
+folders=("/overdrive1")
 
 for folder in ${folders[@]}; do
   final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}${folder}"
 
-
   ####################################
   # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
   ####################################
-  dir_imports="$(grep -E -r $find $final_dir)" # save `grep` command output to a variable
+  dirs="$(pcregrep -rl $full_find $final_dir)" # save `grep` command output to a variable
+
 
   #####################################
   # use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
   #####################################
-  dir_imports="$(tr -d '[:space:]' <<< "$dir_imports")"  
+  # dirs="$(tr -d '[:space:]' <<< "$dirs")"  
 
 
   if [ "$display_files_only" = true ] ; 
@@ -66,22 +75,28 @@ for folder in ${folders[@]}; do
    printf 'Processing files under folder dir: '$folder''
    printf '\n\n--------------------------------------\n\n'
 
-
   fi
 
-  # Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
-  # this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
-  IFS=';'
 
-  for dir_import in $dir_imports
+  # # Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
+  # # this is needed because the $dir_imports (from the `grep` command with the -r flag) string separates each item with a semicolon
+  # IFS=';'
+
+  for dir in $dirs
    do 
 
-   # setting the lastpipe option would make the last part of the pipeline run in the current environment
-   # `shopt` is used to update the settings of the shell terminal
-    shopt -s lastpipe
+   # # setting the lastpipe option would make the last part of the pipeline run in the current environment
+   # # `shopt` is used to update the settings of the shell terminal
+   #  shopt -s lastpipe
 
-    # removes the semicolon (:) and extracts the dir
-    echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
+   #  # removes the semicolon (:) and extracts the dir
+   #  echo $dir_import | grep -E -o ".*:" | { read data && dir="$(sed -E 's|':'||' <<< $data)"; } 
+
+   #  # # removes the semicolon (:) and extracts the import statement
+   #  # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
+   #  grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
+
+ 
 
     if [ "$display_files_only" = true ] ; then
        printf "$dir\n"
@@ -93,15 +108,9 @@ for folder in ${folders[@]}; do
     printf "Processing file at directory:  "$dir"\n"
    ##############################################
 
-
-    
-    # # removes the semicolon (:) and extracts the import statement
-    # echo $dir_import | grep -E -o ":.*" | { read data && import="$(sed -E 's|':'||' <<< $data)"; }
-    grep -E -o "\{.*\}" <<< $dir_import | { read data && data="$(sed -E 's|\{|{ |' <<< $data)" && data="$(sed -E 's|\}| }|' <<< $data)" && import_replace="$(sed -E 's|_|'$data'|' <<< $replace)"; }
-
-
+   
     # command to update the file according to the directory given in $dir
-    sed -i -E "s|"$find"|"$import_replace"|" $dir
+    sed -i -E "s|"$partial_find"|"$replace"|" $dir
 
   done
  
