@@ -22,9 +22,34 @@ prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 path_to_WSL_filesystem=/mnt/c/Users/gohja/Desktop
 path_to_bit_file=mapitin-repository/mapitin-api-server/src # to replace in PROD
 
+
+# &> syntax is used to redirect all stdout and stderr to a file
+# /dev/null is a null device file that discards anything written to it
+# &> /dev/null is used to redirect all stdout and stderr to a null device file - basically just throws all output to a 'vacuum' that discards anything written to it
+
+script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+path_to_data_file="${script_dir}/folders_data.txt"
+
 # folders=("/services" "/database" "/helpers" "/models")
 # folders=("/components" "/screens" "/navigation")
-folders=("/bit-cloud")
+
+
+##################
+# Updating of folders array - to be read from `folders_data.txt`
+##################
+
+# current issue: the last line is not read if there is no newline in the text file
+while read line
+ do
+  folders+=($line)
+done < $path_to_data_file
+
+
+# for folder in "${folders[@]}"; do
+#  echo $folder
+# done
+
+exit
 
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
@@ -54,7 +79,7 @@ while getopts 'dpfhs:r:' OPTION; do
      printf "\n [-p] production mode"
      printf "\n [-f] print files only"
      printf "\n [-s] to specify the directory to run this script on; base path would be: "$path_to_WSL_filesystem""
-     printf "\n [-r] to specify the file directory for the import statement to replace with in development mode (-d) flag; default to: "$dev_replace_str""
+     printf "\n [-r] to specify the file directory for the import statement to replace with, only in development mode (-d) flag; default to: "$dev_replace_str""
      printf "\n [-h] prints help message"
      printf "\n\n"
      ;;
@@ -73,9 +98,13 @@ while getopts 'dpfhs:r:' OPTION; do
 done
 
 # -z operator checks if the variable is unset
-if [ -z "$full_find" ] || [ -z "$partial_find" ] || [ -z "$replace" ];
+if [ -z "$folders" ] || [ -z "$full_find" ] || [ -z "$partial_find" ] || [ -z "$replace" ];
  then 
-  echo Please provide either -d or -p flag
+  printf '\n------------------------- ERROR ---------------------------------\n'
+  printf '\nThere is an error with either:'
+  printf '\n-----------------------------------------------------------------\n'
+  printf "1. -d or -p flag is not provided\n"
+  printf "2. \"folders\" variable is unset in the source code\n\n"
   exit 1;
 fi
 
