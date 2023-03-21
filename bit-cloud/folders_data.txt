@@ -1,4 +1,4 @@
 /services
-/helpers
 /database
+/helpers
 /models

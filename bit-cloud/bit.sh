@@ -19,7 +19,7 @@
 #######################################################
 
 
-dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"(../)+?mapitin-interfaces/index\""
+dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"(../)+?mapitin-api-server/src/shared/interfaces/index.interfaces\""
 dev_replace_str="\"../../../mapitin-api-server/src/shared/interfaces/index.interfaces\""
 
 prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"@mapitin/mapitin-library.interfaces\""
@@ -52,6 +52,9 @@ do
 done
 
 
+dev=false
+prod=false
+
 
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
@@ -59,7 +62,7 @@ done
 # f (files) - only display the files with string match
 # h (help) - display help message
 # s - to specify the directory to run this script on 
-# r - to specify the file directory for the import statement to replace with 
+# r - to specify the file directory for the import statement
 
 while getopts 'dpfhs:r:' OPTION; do
   case "$OPTION" in
@@ -67,11 +70,13 @@ while getopts 'dpfhs:r:' OPTION; do
       full_find=$prod_find_regex # to match the whole import statement ( import { var1 } from "...")
       partial_find=$prod_replace_str  # to only variable name import section ({ var1 })
       replace=$dev_replace_str
+      dev=true
       ;;
     p)
       full_find=$dev_find_regex
       partial_find=$dev_replace_str
       replace=$prod_replace_str
+      prod=true
       ;;
     f)
       display_files_only=true
@@ -81,7 +86,7 @@ while getopts 'dpfhs:r:' OPTION; do
      printf "\n [-p] production mode"
      printf "\n [-f] print files only"
      printf "\n [-s] to specify the directory to run this script on; base path would be: "$path_to_WSL_filesystem""
-     printf "\n [-r] to specify the file directory for the import statement to replace with, only in development mode (-d) flag; default to: "$dev_replace_str""
+     printf "\n [-r] to specify the file directory for the import statement (for -d flag, would be replace string, while for -p flag, would be find string); default to: "$dev_replace_str""
      printf "\n [-h] prints help message"
      printf "\n\n"
      ;;
@@ -90,7 +95,16 @@ while getopts 'dpfhs:r:' OPTION; do
      path_to_bit_file="$OPTARG"
      ;;
     r)
+    if [ "$dev" = true ]; 
+    
+    then
      replace="$OPTARG"
+
+    else 
+     full_find="$OPTARG"
+     partial_find="$OPTARG"
+
+    fi
      ;;
     ?)
       echo "script usage: "$0" [-d] [-p] [-f]" >&2 # >&2 means output stdout to stderr
