@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+
+###################### PURPOSE OF THIS SCRIPT #################################
+# To convert bit import statements from dev to prod 
+###############################################################################
+
 #######################################################
 # [[:space:]] matches an empty space; [a-zA-Z] matches all the alphabets, both upper and lowercase
 # within the \{ \} ({}) match, with escape char (\); there are 4 test cases
@@ -14,7 +20,7 @@
 
 
 dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"(../)+?mapitin-interfaces/index\""
-dev_replace_str="\"../../../mapitin-interfaces/index\""
+dev_replace_str="\"../../../mapitin-api-server/src/shared/interfaces/index.interfaces\""
 
 prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"@mapitin/mapitin-library.interfaces\""
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
