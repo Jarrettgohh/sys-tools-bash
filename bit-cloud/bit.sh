@@ -20,7 +20,7 @@ prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?f
 prod_replace_str="\"@mapitin/mapitin-library.interfaces\""
 
 path_to_WSL_filesystem=/mnt/c/Users/gohja/Desktop
-path_to_bit_file=mapitin-repository/mapitin-api-server/src # to replace in PROD
+path_to_bit_file=/mapitin-repository/mapitin-api-server/src # to replace in PROD
 
 
 # &> syntax is used to redirect all stdout and stderr to a file
@@ -38,18 +38,14 @@ path_to_data_file="${script_dir}/folders_data.txt"
 # Updating of folders array - to be read from `folders_data.txt`
 ##################
 
-# current issue: the last line is not read if there is no newline in the text file
-while read line
- do
-  folders+=($line)
-done < $path_to_data_file
+IFS=$'\r\n'; command; eval "FOLDERS_DATA=($(cat "$path_to_data_file"))"
+
+for folder in "${FOLDERS_DATA[@]}";
+do
+ folders+=($folder) 
+done
 
 
-# for folder in "${folders[@]}"; do
-#  echo $folder
-# done
-
-exit
 
 ################## PROCESSING OF THE FLAGS ARGS ###############################
 # d (dev): development - to change the bit imports to be local
@@ -57,7 +53,7 @@ exit
 # f (files) - only display the files with string match
 # h (help) - display help message
 # s - to specify the directory to run this script on 
-# r - to specify the file directory for the import statement
+# r - to specify the file directory for the import statement to replace with 
 
 while getopts 'dpfhs:r:' OPTION; do
   case "$OPTION" in
@@ -110,20 +106,8 @@ fi
 
 
 for folder in ${folders[@]}; do
-  final_dir="${path_to_WSL_filesystem}/${path_to_bit_file}${folder}"
 
-  ####################################
-  # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
-
-  # pcregrep with -M flag allows multiline searching
-  # -r flag is recursive search and -l flag is print only file names
-  ####################################
-  dirs="$(pcregrep -M -rl $full_find $final_dir)" # save `grep` command output to a variable
-
-  #####################################
-  # use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
-  #####################################
-  # dirs="$(tr -d '[:space:]' <<< "$dirs")"  
+  final_dir="${path_to_WSL_filesystem}${path_to_bit_file}${folder}"
 
 
   if [ "$display_files_only" = true ] ; 
@@ -139,6 +123,23 @@ for folder in ${folders[@]}; do
    printf '\n\n--------------------------------------\n\n'
 
   fi
+  
+  ####################################
+  # Command to find all the files that contains text that matches the string pattern, and outputs the directories along with the pattern
+
+  # pcregrep with -M flag allows multiline searching
+  # -r flag is recursive search and -l flag is print only file names
+  ####################################
+
+#  { dirs="$(pcregrep -M -rl $full_find $final_dir &> /dev/null)"; } || { printf "\n\nDirectory not found, check the folders data defined in "$path_to_data_file"\n\n"; continue; }
+
+ dirs="$(pcregrep -M -rl $full_find $final_dir)"
+
+
+  #####################################
+  # use the transform (tr) command along with the delete flag (-d) -- removes spaces, nextline, tabs, etc.
+  #####################################
+  # dirs="$(tr -d '[:space:]' <<< "$dirs")"  
 
 
   # # Set the IFS (Internal Field Separator) to be a semicolon (;) instead: https://www.baeldung.com/linux/ifs-shell-variable
@@ -174,8 +175,10 @@ for folder in ${folders[@]}; do
    
     # command to update the file according to the directory given in $dir
     sed -i -E "s|"$partial_find"|"$replace"|" $dir
-
+  
   done
+
+  printf "\n\n"
  
 done
 
