@@ -19,14 +19,13 @@
 #######################################################
 
 
-dev_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"(../)+?mapitin-api-server/src/shared/interfaces/index.interfaces\""
-dev_replace_str="\"../../../mapitin-api-server/src/shared/interfaces/index.interfaces\""
+find_regex=""
+replace_str=""
+print_files_only=false
 
-prod_find_regex="import[[:space:]]+?\{([a-zA-Z]|[[:space:]]|,)+?\}[[:space:]]+?from[[:space:]]+?\"@mapitin/mapitin-library.interfaces\""
-prod_replace_str="../models/index.models"
+base_path_to_WSL_filesystem=/mnt/c/Users/gohja/Desktop
+sub_path_dir=""
 
-path_to_WSL_filesystem=/mnt/c/Users/gohja/Desktop
-path_to_bit_file=/mapitin-repository/mapitin-api-server/src # to replace in PROD
 
 
 # &> syntax is used to redirect all stdout and stderr to a file
@@ -34,103 +33,86 @@ path_to_bit_file=/mapitin-repository/mapitin-api-server/src # to replace in PROD
 # &> /dev/null is used to redirect all stdout and stderr to a null device file - basically just throws all output to a 'vacuum' that discards anything written to it
 
 script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
-path_to_data_file="${script_dir}/folders_data.txt"
+path_to_folders_data="${script_dir}/folders_data.txt"
 
-# folders=("/services" "/database" "/helpers" "/models")
-# folders=("/components" "/screens" "/navigation")
 
 
 ##################
 # Updating of folders array - to be read from `folders_data.txt`
 ##################
 
-IFS=$'\r\n'; command; eval "FOLDERS_DATA=($(cat "$path_to_data_file"))"
+IFS=$'\r\n'; command; eval "FOLDERS_DATA=($(cat "$path_to_folders_data"))"
 
 for folder in "${FOLDERS_DATA[@]}";
 do
  folders+=($folder) 
 done
 
-
-dev=false
-prod=false
-
-
-################## PROCESSING OF THE FLAGS ARGS ###############################
-# d (dev): development - to change the bit imports to be local
-# p (prod): production - to change the bit imports to be production
-# f (files) - only display the files with string match
-# h (help) - display help message
-# s - to specify the directory to run this script on 
-# r - to specify the file directory for the import statement
-
-while getopts 'dpfhs:r:' OPTION; do
+while getopts 'f:r:b:s:p' OPTION; do
   case "$OPTION" in
-    d) 
-      full_find=$prod_find_regex # to match the whole import statement ( import { var1 } from "...")
-      partial_find=$prod_replace_str  # to only variable name import section ({ var1 })
-      replace=$dev_replace_str
-      dev=true
-      ;;
-    p)
-      full_find=$dev_find_regex
-      partial_find=$dev_replace_str
-      replace=$prod_replace_str
-      prod=true
-      ;;
-    f)
-      display_files_only=true
-     ;;
-    h)
-     printf "\n [-d] development mode"
-     printf "\n [-p] production mode"
-     printf "\n [-f] print files only"
-     printf "\n [-s] to specify the directory to run this script on; base path would be: "$path_to_WSL_filesystem""
-     printf "\n [-r] to specify the file directory for the import statement (for -d flag, would be replace string, while for -p flag, would be find string); default to: "$dev_replace_str""
-     printf "\n [-h] prints help message"
-     printf "\n\n"
-     ;;
+    f) 
+    find_regex=$OPTARG
+    ;;
+    r)
+    replace_str=$OPTARG
+    ;;
+    b)
+    # the argument passed in to the -b flag will be stored by default in $OPTARG
+    base_path_to_WSL_filesystem="$OPTARG"
+    ;;
     s)
     # the argument passed in to the -s flag will be stored by default in $OPTARG
-     path_to_bit_file="$OPTARG"
-     ;;
-    r)
-    if [ "$dev" = true ]; 
-    
-    then
-     replace="$OPTARG"
-
-    else 
-     full_find="$OPTARG"
-     partial_find="$OPTARG"
-
-    fi
-     ;;
+    sub_path_dir="$OPTARG"
+    ;;
+    p)
+    print_files_only=true
+    ;;
     ?)
       echo "script usage: "$0" [-d] [-p] [-f]" >&2 # >&2 means output stdout to stderr
       exit 1
       ;;
+    h)
+     printf "\n [-f] Regex pattern for string to find"
+     printf "\n [-r] Replace pattern for found string"
+     printf "\n [-p] To only print the files found by the [-f] regex pattern, without replacing found string with the [-r] string specified"
+     printf "\n [-b] To specify the base directory to run this script on; default would be: "$base_path_to_WSL_filesystem""
+     printf "\n [-s] To specify the sub directory; default would be: "$sub_path_dir""
+     printf "\n [-h] prints help message"
+     printf "\n\n"
+     ;;
   esac
 done
 
+
+# If the [-p] flag is NOT set (print files only), require the [-r] flag (replace_str) to be set
+
+if [[ "$print_files_only" = false  && -z "$replace_str"  ]];
+  then 
+      printf '\n------------------------- ERROR ---------------------------------\n'
+      printf '\nAs the [-p] flag is not provided, the [-r] flag needs to be set.\n'
+      printf '\n-----------------------------------------------------------------\n\n'
+      exit 1
+  fi
+
+
 # -z operator checks if the variable is unset
-if [ -z "$folders" ] || [ -z "$full_find" ] || [ -z "$partial_find" ] || [ -z "$replace" ];
+if [ -z "$folders" ] || [ -z "$find_regex" ];
  then 
   printf '\n------------------------- ERROR ---------------------------------\n'
   printf '\nThere is an error with either:'
   printf '\n-----------------------------------------------------------------\n'
-  printf "1. -d or -p flag is not provided\n"
-  printf "2. \"folders\" variable is unset in the source code\n\n"
+  printf "1. -f flag is not provided\n"
+  printf "2. \"folders_data.txt\" file is empty\n\n"
   exit 1;
 fi
 
 
 for folder in ${folders[@]}; do
 
-  final_dir="${path_to_WSL_filesystem}${path_to_bit_file}${folder}"
+  final_dir="${base_path_to_WSL_filesystem}${sub_path_dir}${folder}"
 
 
-  if [ "$display_files_only" = true ] ; 
+  if [ "$print_files_only" = true ] ; 
 
   then
    printf '\n\n--------------------------------------\n\n'
@@ -151,9 +133,9 @@ for folder in ${folders[@]}; do
   # -r flag is recursive search and -l flag is print only file names
   ####################################
 
-#  { dirs="$(pcregrep -M -rl $full_find $final_dir &> /dev/null)"; } || { printf "\n\nDirectory not found, check the folders data defined in "$path_to_data_file"\n\n"; continue; }
+#  { dirs="$(pcregrep -M -rl $full_find $final_dir &> /dev/null)"; } || { printf "\n\nDirectory not found, check the folders data defined in "$path_to_folders_data"\n\n"; continue; }
 
- dirs="$(pcregrep -M -rl $full_find $final_dir)"
+ dirs="$(pcregrep -M -rl $find_regex $final_dir)"
 
 
   #####################################
@@ -182,7 +164,7 @@ for folder in ${folders[@]}; do
 
  
 
-    if [ "$display_files_only" = true ] ; then
+    if [ "$print_files_only" = true ] ; then
        printf "$dir\n"
        continue
     fi
@@ -194,7 +176,7 @@ for folder in ${folders[@]}; do
 
    
     # command to update the file according to the directory given in $dir
-    sed -i -E "s|"$partial_find"|"$replace"|" $dir
+    sed -i -E "s|"$find_regex"|"$replace_str"|" $dir
   
   done
 
