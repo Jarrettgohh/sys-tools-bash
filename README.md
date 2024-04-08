@@ -1,5 +1,5 @@
-# sys
-System administration for the MapItIn project
+# file_search_replace
 
-# Bit cloud (Harmony)
-- bit.sh file is used to convert the import statements from local to public import and vice versa
+> To convert bit import statements from dev to prod
+
+- This script works on the folders as specified in the `folders_data.txt`
