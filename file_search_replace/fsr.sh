@@ -3,7 +3,7 @@
 
 
 ###################### PURPOSE OF THIS SCRIPT #################################
-# To convert bit import statements from dev to prod 
+# To find and replace string patterns within specified files in a folder list provided
 ###############################################################################
 
 #######################################################
