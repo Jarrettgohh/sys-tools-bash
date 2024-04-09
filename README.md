@@ -24,12 +24,16 @@ For example:
 ```
 user@linux:sys-tools-bash/file_search_replace$ ls ~/example_folder
 ... results
+... 
+...
 
 user@linux:sys-tools-bash/file_search_replace$ ./fsr.sh -<other_relevant_flags> -b '~/example_folder'
-... error message: failed to open file: No such file or directory
+failed to open file ...: No such file or directory
 
 user@linux:sys-tools-bash/file_search_replace$ ./fsr.sh -<other_relevant_flags> -b ~/example_folder
 ... desired results
+...
+...
 ```
 
 
