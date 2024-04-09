@@ -7,5 +7,5 @@
 > Script execution
 
 ```
-user@linux:sys/file_search_replace$ ./fsr.sh -<flags>
+user@linux:sys-tools-bash/file_search_replace$ ./fsr.sh -<flags>
 ```
